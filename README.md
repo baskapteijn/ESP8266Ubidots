@@ -1,4 +1,4 @@
-# ESP8266 Ubidots - Sketches for the ESP8266 using the Ubidots IOT library for Arduino
+# ESP8266 Ubidots - ESP8266 sketches using the Ubidots IOT library for Arduino
 
 
 ## Sketches
