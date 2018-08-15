@@ -52,18 +52,8 @@ project(${PROJECT_NAME})
 # Configure include directories
 include_directories(${TIMESTAMP_SRC_DIR} ${DHT22_SRC_DIR} ${UBIDOTS_SRC_DIR} ${ESP_SRC_DIR})
 
-# Generate library
-#generate_arduino_library(
-#        ${PROJECT_NAME}Lib
-#        SRCS
-#            ${LIB_SRC_DIR}/ErriezDHT22.cpp
-#        HDRS
-#            ${LIB_SRC_DIR}/ErriezDHT22.h
-#)
-
 # Configure project
 set(${CMAKE_PROJECT_NAME}_SKETCH    ${SKETCH})
-#set(${CMAKE_PROJECT_NAME}_LIBS      ${PROJECT_NAME}Lib)
 set(${CMAKE_PROJECT_NAME}_BOARD     ${BOARD})
 set(${CMAKE_PROJECT_NAME}_PORT      ${SERIAL_PORT})
 generate_arduino_firmware(${CMAKE_PROJECT_NAME})
