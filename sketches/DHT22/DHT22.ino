@@ -15,17 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-
-//TODO: increase send period to 5 minutes
-
 #include <UbidotsMicroESP8266.h>
 #include <ErriezDHT22.h>
 #include <ErriezTimestamp.h>
 #include <Esp.h>
 #include "private.h"
 
-#define UBIDOTS_UPDATE_INTERVAL_MS  15000   // 15 seconds
-#define DHT22_SAMPLE_TIME_MS        1000    // 1 second is enough time for the sensor readout
+// 5 minutes
+#define UBIDOTS_UPDATE_INTERVAL_MS  (5ul * 60ul * 1000ul)
+// 1 second is enough time for the sensor readout
+#define DHT22_SAMPLE_TIME_MS        1000ul
 
 // Connect DTH22 DAT pin to Arduino DIGITAL pin
 #if defined(ARDUINO_ESP8266_NODEMCU)
