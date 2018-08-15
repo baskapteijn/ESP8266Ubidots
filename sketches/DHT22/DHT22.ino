@@ -17,8 +17,6 @@
 */
 
 //TODO: increase send period to 5 minutes
-//TODO: average as many samples as possible per send period
-//TODO: transmit the samples_count and sample_errors as variables too
 
 #include <UbidotsMicroESP8266.h>
 #include <ErriezDHT22.h>
@@ -52,6 +50,7 @@ static uint32_t freeMemoryMax = 0;
 static uint64_t temperatureSum = 0;
 static uint64_t humiditySum = 0;
 static uint64_t samples = 0;
+static uint64_t sampleErrors = 0;
 
 // Function prototypes
 static void UpdateFreeMemory(void);
@@ -183,6 +182,8 @@ void loop()
         // Add the variables to the Ubidots data
         client.add("temperature", sendTemperature);
         client.add("humidity", sendHumidity);
+        client.add("samples", samples);
+        client.add("sample_errors", sampleErrors);
 
         // Transmit
         client.sendAll(true);
@@ -192,6 +193,7 @@ void loop()
         temperatureSum = 0;
         humiditySum = 0;
         samples = 0;
+        sampleErrors = 0;
     } else if (timestampDelta <
                (UBIDOTS_UPDATE_INTERVAL_MS - DHT22_SAMPLE_TIME_MS)) {
         // There is still more than enough time to get sensor values
@@ -228,6 +230,8 @@ void loop()
                 temperatureSum += temperature;
                 humiditySum += humidity;
                 samples++;
+            } else {
+                sampleErrors++;
             }
         }
     }
