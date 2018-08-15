@@ -153,6 +153,9 @@ void loop()
     // Once every UBIDOTS_UPDATE_INTERVAL_MS
     if (timestampDelta >= UBIDOTS_UPDATE_INTERVAL_MS) {
 
+        // Re-start timestamp immediately to maintain the interval
+        timestamp.start();
+
         // Check minimum interval of 2000 ms between sensor reads
         if (sensor.available()) {
 
@@ -190,9 +193,6 @@ void loop()
         // Transmit
         client.sendAll(true);
         Serial.println("");
-
-        // Re-start timestamp
-        timestamp.start();
     }
 
     // Keep track of free memory and print any changes
