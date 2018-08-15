@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
+#include <stdint.h>
+#include <stdbool.h>
 #include <UbidotsMicroESP8266.h>
 #include <ErriezDHT22.h>
 #include <ErriezTimestamp.h>
