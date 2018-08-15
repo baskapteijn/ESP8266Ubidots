@@ -26,7 +26,8 @@
 #include <Esp.h>
 #include "private.h"
 
-#define UBIDOTS_UPDATE_INTERVAL_MS  15000 // 15 seconds
+#define UBIDOTS_UPDATE_INTERVAL_MS  15000   // 15 seconds
+#define DHT22_SAMPLE_TIME_MS        1000    // 1 second is enough time for the sensor readout
 
 // Connect DTH22 DAT pin to Arduino DIGITAL pin
 #if defined(ARDUINO_ESP8266_NODEMCU)
@@ -47,6 +48,10 @@ TimestampMillis timestamp;
 // Globals
 static uint32_t freeMemoryMin = UINT32_MAX;
 static uint32_t freeMemoryMax = 0;
+
+static uint64_t temperatureSum = 0;
+static uint64_t humiditySum = 0;
+static uint64_t samples = 0;
 
 // Function prototypes
 static void UpdateFreeMemory(void);
@@ -147,6 +152,7 @@ void loop()
     int16_t humidity = 0;
     float sendTemperature = 0;
     float sendHumidity = 0;
+    bool skipSample = false;
 
     timestampDelta = timestamp.delta();
 
@@ -155,6 +161,40 @@ void loop()
 
         // Re-start timestamp immediately to maintain the interval
         timestamp.start();
+
+        // Store the average of the summed sensor values
+        if (samples > 0) { // Protect against divide by 0
+            temperatureSum /= samples;
+            humiditySum /= samples;
+        } else {
+            temperatureSum = 0;
+            humiditySum = 0;
+        }
+
+        // Convert the sensor values to floats with a single decimal
+        sendTemperature = (float)temperatureSum / 10;
+        sendHumidity = (float)humiditySum / 10;
+
+        Serial.print("avg temperature: ");
+        Serial.println(sendTemperature, 1);
+        Serial.print("avg humidity: ");
+        Serial.println(sendHumidity, 1);
+
+        // Add the variables to the Ubidots data
+        client.add("temperature", sendTemperature);
+        client.add("humidity", sendHumidity);
+
+        // Transmit
+        client.sendAll(true);
+        Serial.println("");
+
+        // Reset data
+        temperatureSum = 0;
+        humiditySum = 0;
+        samples = 0;
+    } else if (timestampDelta <
+               (UBIDOTS_UPDATE_INTERVAL_MS - DHT22_SAMPLE_TIME_MS)) {
+        // There is still more than enough time to get sensor values
 
         // Check minimum interval of 2000 ms between sensor reads
         if (sensor.available()) {
@@ -168,6 +208,7 @@ void loop()
             // Correct it to 0 on failed reads
             if (temperature == ~(int16_t)0) {
                 temperature = 0;
+                skipSample = true;
             }
 
             // Read humidity from sensor (blocking)
@@ -179,20 +220,16 @@ void loop()
             // Correct it to 0 on failed reads
             if (humidity == ~(int16_t)0) {
                 humidity = 0;
+                skipSample = true;
+            }
+
+            // Add the samples to their respective sums (if valid)
+            if (skipSample == false) {
+                temperatureSum += temperature;
+                humiditySum += humidity;
+                samples++;
             }
         }
-
-        // Convert the sensor values to floats with a single decimal
-        sendTemperature = (float)temperature / 10;
-        sendHumidity = (float)humidity / 10;
-
-        // Add the variables to the Ubidots data
-        client.add("temperature", sendTemperature);
-        client.add("humidity", sendHumidity);
-
-        // Transmit
-        client.sendAll(true);
-        Serial.println("");
     }
 
     // Keep track of free memory and print any changes
