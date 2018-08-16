@@ -191,7 +191,8 @@ void loop()
 
         // Transmit
         retries = 0;
-        while (client.sendAll(true) == false) {
+        // Unlike what the sendAll doxygen states, false is returned on success
+        while (client.sendAll(true) != false) {
             delay(1000);
             if (retries++ > UBIDOTS_RETRIES) {
                 // All hope is lost, restart the MCU
