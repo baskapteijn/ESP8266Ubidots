@@ -25,6 +25,8 @@
 
 // 5 minutes
 #define UBIDOTS_UPDATE_INTERVAL_MS  (5ul * 60ul * 1000ul)
+#define UBIDOTS_RETRIES             10
+
 // 1 second is enough time for the sensor readout
 #define DHT22_SAMPLE_TIME_MS        1000ul
 
@@ -153,6 +155,7 @@ void loop()
     float sendTemperature = 0;
     float sendHumidity = 0;
     bool skipSample = false;
+    uint8_t retries = 0;
 
     timestampDelta = timestamp.delta();
 
@@ -187,7 +190,15 @@ void loop()
         client.add("sample_errors", sampleErrors);
 
         // Transmit
-        client.sendAll(true);
+        retries = 0;
+        // Unlike what the sendAll doxygen states, false is returned on success
+        while (client.sendAll(true) != false) {
+            delay(1000);
+            if (retries++ > UBIDOTS_RETRIES) {
+                // All hope is lost, restart the MCU
+                ESP.restart();
+            }
+        }
         Serial.println("");
 
         // Reset data
