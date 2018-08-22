@@ -216,8 +216,6 @@ void loop()
 
             // Read temperature from sensor (blocking)
             temperature = sensor.readTemperature();
-            // If there were retries, make sure to store them
-            sampleErrors += sensor.getNumRetriesLastConversion();
 
             // Print temperature (can handle a failed read)
             printTemperature(temperature);
@@ -230,8 +228,6 @@ void loop()
 
             // Read humidity from sensor (blocking)
             humidity = sensor.readHumidity();
-            // If there were retries, make sure to store them
-            sampleErrors += sensor.getNumRetriesLastConversion();
 
             // Print humidity (can handle a failed read)
             printHumidity(humidity);
@@ -241,6 +237,13 @@ void loop()
                 humidity = 0;
                 skipSample = true;
             }
+
+            // If there were retries, make sure to store them
+            //
+            // Do this once because we are well within the 2000ms time between the temperature and
+            // humidity reads, so the humidity read returns the cached value
+            // (i.e. the second time no real sensor access has occurred)
+            sampleErrors += sensor.getNumRetriesLastConversion();
 
             // Add the samples to their respective sums (if valid)
             if (skipSample == false) {
