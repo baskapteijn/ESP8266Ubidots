@@ -140,8 +140,9 @@ void setup()
     // Keep track of free memory and print any changes
     UpdateFreeMemory();
 
-    // Initialize sensor
-    sensor.begin();
+    // Initialize sensor, max 2 retries (so 3 tries) per read, no averaging
+    // Many retries might heat-up the sensor, but we do not expect them to happen very often
+    sensor.begin(2, 0);
 
     // Initialize WIFI connection
     client.wifiConnection(SSID, PASS);
@@ -215,6 +216,8 @@ void loop()
 
             // Read temperature from sensor (blocking)
             temperature = sensor.readTemperature();
+            // If there were retries, make sure to store them
+            sampleErrors += sensor.getNumRetriesLastConversion();
 
             // Print temperature (can handle a failed read)
             printTemperature(temperature);
@@ -227,6 +230,8 @@ void loop()
 
             // Read humidity from sensor (blocking)
             humidity = sensor.readHumidity();
+            // If there were retries, make sure to store them
+            sampleErrors += sensor.getNumRetriesLastConversion();
 
             // Print humidity (can handle a failed read)
             printHumidity(humidity);
@@ -242,9 +247,7 @@ void loop()
                 temperatureSum += temperature;
                 humiditySum += humidity;
                 samples++;
-            } else {
-                sampleErrors++;
-            }
+            } // else just skip it, it's been registered in sampleErrors
         }
     }
 
