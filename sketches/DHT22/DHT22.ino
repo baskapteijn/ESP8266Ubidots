@@ -140,9 +140,8 @@ void setup()
     // Keep track of free memory and print any changes
     UpdateFreeMemory();
 
-    // Initialize sensor, max 2 retries (so 3 tries) per read, no averaging
-    // Many retries might heat-up the sensor, but we do not expect them to happen very often
-    sensor.begin(2, 0);
+    // Initialize sensor, no averaging
+    sensor.begin(0);
 
     // Initialize WIFI connection
     client.wifiConnection(SSID, PASS);
@@ -213,8 +212,17 @@ void loop()
 
         // Check minimum interval of 2000 ms between sensor reads
         if (sensor.available()) {
-
-            // Read temperature from sensor (blocking)
+            // Read sensor data
+            // If there were retries, make sure to store them
+            //
+            // Do this once because we are well within the 2000ms time between the temperature and
+            // humidity reads, so the humidity read returns the cached value
+            // (i.e. the second time no real sensor access has occurred)
+            if (sensor.readSensorData() != true) {
+              sampleErrors++;
+            }
+              
+            // Read temperature from sensor
             temperature = sensor.readTemperature();
 
             // Print temperature (can handle a failed read)
@@ -226,7 +234,7 @@ void loop()
                 skipSample = true;
             }
 
-            // Read humidity from sensor (blocking)
+            // Read humidity from sensor
             humidity = sensor.readHumidity();
 
             // Print humidity (can handle a failed read)
@@ -237,13 +245,6 @@ void loop()
                 humidity = 0;
                 skipSample = true;
             }
-
-            // If there were retries, make sure to store them
-            //
-            // Do this once because we are well within the 2000ms time between the temperature and
-            // humidity reads, so the humidity read returns the cached value
-            // (i.e. the second time no real sensor access has occurred)
-            sampleErrors += sensor.getNumRetriesLastConversion();
 
             // Add the samples to their respective sums (if valid)
             if (skipSample == false) {
